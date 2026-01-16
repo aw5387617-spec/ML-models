@@ -41,9 +41,9 @@ base_model = MobileNetV2(
 
 base_model.trainable = False
 x = base_model.output
-x = GlobalAveragePooling2D()(x)  # global average pooling
-x = Dense(128, activation="relu")(x)  # full connected with 128 neurons
-output = Dense(1, activation="sigmoid")(x)  # output layer with 1 neuron
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation="relu")(x)
+output = Dense(1, activation="sigmoid")(x)
 model = Model(inputs=base_model.input, outputs=output)
 model.compile(
     optimizer="adam",
@@ -72,9 +72,7 @@ model.compile(
 )
 
 callbacks = [
-    # Stops training if validation loss stops improving (avoids overfitting)
     EarlyStopping(patience=3, restore_best_weights=True),
-    # reduces learning rate when validation loss stops improving
     ReduceLROnPlateau(patience=2, factor=0.2)
 ]
 
