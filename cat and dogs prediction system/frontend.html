@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat vs Dog Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .upload-btn {
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .upload-btn:hover {
+            background-color: #45a049;
+        }
+
+        #preview {
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        #preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+
+        .result.success {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            color: #3c763d;
+            display: block;
+        }
+
+        .result.error {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            display: none;
+        }
+
+        .probabilities {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .probability {
+            text-align: center;
+        }
+
+        .probability-value {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🐱 vs 🐶 Classifier</h1>
+        <p>Upload an image to classify whether it's a cat or a dog!</p>
+
+        <div class="upload-section">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <button class="upload-btn" onclick="document.getElementById('imageInput').click()">Choose Image</button>
+        </div>
+
+        <div id="preview"></div>
+
+        <div class="loading" id="loading">
+            <p>Analyzing image...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
+
+        imageInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Display image preview
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+
+            // Clear previous results
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'none';
+
+            // Show loading indicator
+            loadingDiv.style.display = 'block';
+
+            // Send to API
+            const formData = new FormData();
+            formData.append('image', file);
+
+            fetch('http://localhost:5000/predict', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    loadingDiv.style.display = 'none';
+
+                    if (data.success) {
+                        const prediction = data.prediction;
+
+                        resultDiv.innerHTML = `
+                        <h3>Prediction: ${prediction.predicted_class.toUpperCase()} 🎉</h3>
+                        <p>Confidence: ${(prediction.confidence * 100).toFixed(2)}%</p>
+                        <div class="probabilities">
+                            <div class="probability">
+                                <div>CAT</div>
+                                <div class="probability-value">${(prediction.probabilities.cat * 100).toFixed(2)}%</div>
+                            </div>
+                            <div class="probability">
+                                <div>DOG</div>
+                                <div class="probability-value">${(prediction.probabilities.dog * 100).toFixed(2)}%</div>
+                            </div>
+                        </div>
+                    `;
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.innerHTML = `<h3>Error</h3><p>${data.error}</p>`;
+                        resultDiv.className = 'result error';
+                    }
+                    resultDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    loadingDiv.style.display = 'none';
+                    resultDiv.innerHTML = `<h3>Error</h3><p>Failed to connect to API: ${error.message}</p>`;
+                    resultDiv.className = 'result error';
+                    resultDiv.style.display = 'block';
+                });
+        });
+    </script>
+</body>
+
+</html>

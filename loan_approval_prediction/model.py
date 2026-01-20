@@ -122,7 +122,7 @@ test_applicant = {
     "Self_Employed": "No",
     "ApplicantIncome": 3000,
     "CoapplicantIncome": 1500,
-    "LoanAmount": 100,
+    "LoanAmount": 69,
     "Loan_Amount_Term": 10,
     "Credit_History": 1,
     "Property_Area": "Urban"
